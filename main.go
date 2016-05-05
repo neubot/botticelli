@@ -22,6 +22,8 @@ func main() {
     http.HandleFunc("/speedtest/download", SpeedtestDownload);
     http.HandleFunc("/speedtest/upload", SpeedtestUpload);
 
+    http.HandleFunc("/", http.NotFound);
+
     err := http.ListenAndServe(":8080", nil);
     if err != nil {
         log.Fatal(err);
