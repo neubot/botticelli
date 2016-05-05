@@ -61,6 +61,8 @@ func DashDownload(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("reason", "Ok")
 		w.Header().Set("mimetype", "video/mp4")
 		fmt.Fprintf(w, body, r.URL.Path[1:])
+
+		/// XXX missing response send
 	} else {
 		log.Println("dash: unexpected URI")
 		return
