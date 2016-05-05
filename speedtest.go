@@ -11,6 +11,7 @@ func SpeedtestDownload(w http.ResponseWriter, r *http.Request) {
 }
 
 func SpeedtestNegotiate(w http.ResponseWriter, r *http.Request) {
+    NegotiateDefaultNegotiate(w, r);
 }
 
 func SpeedtestLatency(w http.ResponseWriter, r *http.Request) {
