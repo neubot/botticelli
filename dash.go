@@ -52,7 +52,7 @@ func DashDownload(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("mimetype", "video/mp4")
-		w.Header().Set("Content-Length", strconv.Itoa(body_size))
+		w.Header().Set("Content-Length", resource_size)
 		w.Write(RandByte(body_size))
 }
 
