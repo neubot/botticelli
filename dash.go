@@ -20,14 +20,7 @@ func DashDownload(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	}
 
-	count := 0
-	count++
-
-	if count > DASH_MAXIMUM_REPETITIONS {
-		log.Print("dash: too many repetitions")
-		return
-		//TODO close connection
-	}
+	// TODO: limit maximum number of requests from a client
 
 	//body_size := DASH_MAXIMUM_BODY_SIZE
 	pattern := regexp.MustCompile(`/dash/download/([0-9+]*)$`)
