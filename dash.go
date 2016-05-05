@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"math/rand"
@@ -51,17 +50,13 @@ func DashDownload(w http.ResponseWriter, r *http.Request) {
 
 		//XXX add corect pattern
 		text_pattern := "deadbeef"
-		body := RandString(body_size / len(text_pattern) + 1)
-
-		if len(body) > body_size {
-			body = body[:body_size]
-		}
+		body := RandByte(body_size / len(text_pattern) + 1)
 
 		w.Header().Set("code", "200")
 		w.Header().Set("reason", "Ok")
 		w.Header().Set("mimetype", "video/mp4")
-		fmt.Fprintf(w, body, r.URL.Path[1:])
-
+		//fmt.Fprintf(w, body, r.URL.Path[1:])
+		w.Write(body)
 		/// XXX missing response send
 	} else {
 		log.Println("dash: unexpected URI")
@@ -81,7 +76,7 @@ const (
 
 
 
-func RandString(n int) string {
+func RandByte(n int) []byte {
     b := make([]byte, n)
     src := rand.NewSource(123455)
 
@@ -99,7 +94,7 @@ func RandString(n int) string {
         remain--
     }
 
-    return string(b)
+    return b
 }
 
 func DashNegotiate(w http.ResponseWriter, r *http.Request) {
