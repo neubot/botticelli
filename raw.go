@@ -1,9 +1,9 @@
 package main
 
 import (
-    "net/http"
+	"net/http"
 )
 
 func RawNegotiate(w http.ResponseWriter, r *http.Request) {
-    NegotiateDefaultNegotiate(w, r);
+	NegotiateDefaultNegotiate(w, r)
 }

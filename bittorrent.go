@@ -1,9 +1,9 @@
 package main
 
 import (
-    "net/http"
+	"net/http"
 )
 
 func BittorrentNegotiate(w http.ResponseWriter, r *http.Request) {
-    NegotiateDefaultNegotiate(w, r);
+	NegotiateDefaultNegotiate(w, r)
 }

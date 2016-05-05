@@ -1,7 +1,7 @@
 package main
 
 import (
-    "net/http"
+	"net/http"
 )
 
 func SpeedtestCollect(w http.ResponseWriter, r *http.Request) {
@@ -11,7 +11,7 @@ func SpeedtestDownload(w http.ResponseWriter, r *http.Request) {
 }
 
 func SpeedtestNegotiate(w http.ResponseWriter, r *http.Request) {
-    NegotiateDefaultNegotiate(w, r);
+	NegotiateDefaultNegotiate(w, r)
 }
 
 func SpeedtestLatency(w http.ResponseWriter, r *http.Request) {
