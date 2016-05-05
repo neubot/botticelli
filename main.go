@@ -13,8 +13,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func main() {
     http.HandleFunc("/dash/download", DashDownload);
 
-    http.HandleFunc("/collect/*", NegotiateCollect);
-    http.HandleFunc("/negotiate/*", NegotiateNegotiate);
+    http.HandleFunc("/collect/", NegotiateCollect);
+    http.HandleFunc("/negotiate/", NegotiateNegotiate);
 
     http.HandleFunc("/speedtest/collect", SpeedtestCollect);
     http.HandleFunc("/speedtest/latency", SpeedtestLatency);
