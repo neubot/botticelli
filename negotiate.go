@@ -9,8 +9,9 @@ import (
 )
 
 type defaultResponse struct {
-    Queue_pos int `json:"queue_pos"`
-    Real_address string `json:"real_address"`
+    Authorization string `json:"authorization"`
+    QueuePos int `json:"queue_pos"`
+    RealAddress string `json:"real_address"`
     Unchoked bool `json:"unchoked"`
 }
 
@@ -24,6 +25,8 @@ func addressWithoutPort(s string) (string, error) {
 }
 
 func NegotiateCollect(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+    w.Write([]byte("{}"))
 }
 
 func NegotiateDefaultNegotiate(w http.ResponseWriter, r *http.Request) {
@@ -33,13 +36,17 @@ func NegotiateDefaultNegotiate(w http.ResponseWriter, r *http.Request) {
         return
     }
     message := &defaultResponse{
-        0, addr, true,
+        Authorization: "deadbeef",
+        QueuePos: 0,
+        RealAddress: addr,
+        Unchoked: true,
     }
     data, err := json.Marshal(message)
     if err != nil {
         w.WriteHeader(500)
         return
     }
+    w.Header().Set("Content-Type", "application/json")
     w.Write(data)
 }
 
