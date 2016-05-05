@@ -15,7 +15,10 @@ func DashDownload(w http.ResponseWriter, r *http.Request) {
 	DASH_MAXIMUM_BODY_SIZE := 104857600
 	DASH_MAXIMUM_REPETITIONS := 60
 
-	if strings.HasPrefix(r.URL.Path,"/dash/dowload/") == true {
+	if !strings.HasPrefix(r.URL.Path, "/dash/download/") {
+		log.Println("dash: unexpected URI")
+		http.NotFound(w, r)
+    }
 
 		count := 0
 		count++
@@ -48,20 +51,9 @@ func DashDownload(w http.ResponseWriter, r *http.Request) {
 			body_size = DASH_MAXIMUM_BODY_SIZE
 		}
 
-		//XXX add corect pattern
-		text_pattern := "deadbeef"
-		body := RandByte(body_size / len(text_pattern) + 1)
-
-		w.Header().Set("code", "200")
-		w.Header().Set("reason", "Ok")
 		w.Header().Set("mimetype", "video/mp4")
-		//fmt.Fprintf(w, body, r.URL.Path[1:])
-		w.Write(body)
-		/// XXX missing response send
-	} else {
-		log.Println("dash: unexpected URI")
-		return
-	}
+		w.Header().Set("Content-Length", strconv.Itoa(body_size))
+		w.Write(RandByte(body_size))
 }
 
 

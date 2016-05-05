@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-    http.HandleFunc("/dash/download", DashDownload)
+    http.HandleFunc("/dash/download/", DashDownload)
 
     http.HandleFunc("/collect/", NegotiateCollect)
     http.HandleFunc("/negotiate/", NegotiateNegotiate)
