@@ -14,6 +14,19 @@ import (
 	"time"
 )
 
+const kv_comm_failure byte = 0
+const kv_srv_queue byte = 1
+const kv_msg_login byte = 2
+const kv_test_prepare byte = 3
+const kv_test_start byte = 4
+const kv_test_msg byte = 5
+const kv_test_finalize byte = 6
+const kv_msg_error byte = 7
+const kv_msg_results byte = 8
+const kv_msg_logout byte = 9
+const kv_msg_waiting byte = 10
+const kv_msg_extended_login byte = 11
+
 const kv_test_mid int = 1
 const kv_test_c2s int = 2
 const kv_test_s2c int = 4
@@ -22,6 +35,8 @@ const kv_test_status int = 16
 const kv_test_meta int = 32
 
 const kv_implemented_tests int = kv_test_s2c | kv_test_meta
+
+const kv_product = "botticelli/0.0.1"
 
 /*
  __  __
@@ -34,7 +49,7 @@ const kv_implemented_tests int = kv_test_s2c | kv_test_meta
 	Message serialization and deserialization.
 */
 
-func read_message(reader io.Reader) (byte, []byte, error) {
+func read_message_internal(reader io.Reader) (byte, []byte, error) {
 
 	// 1. read type
 
@@ -47,6 +62,7 @@ func read_message(reader io.Reader) (byte, []byte, error) {
 	log.Printf("ndt: message type: %d", msg_type)
 
 	// 2. read length
+	// TODO: make sure we do endianness conversion correctly
 
 	len_buff := make([]byte, 2)
 	_, err = io.ReadFull(reader, len_buff)
@@ -73,7 +89,7 @@ type standard_message_t struct {
 }
 
 func read_standard_message(reader io.Reader) (byte, string, error) {
-	msg_type, msg_buff, err := read_message(reader)
+	msg_type, msg_buff, err := read_message_internal(reader)
 	if err != nil {
 		return 0, "", err
 	}
@@ -145,15 +161,15 @@ func read_extended_login(reader io.Reader) (*extended_login_message_t, error) {
 
 	// Read ordinary message
 
-	msg_type, msg_buff, err := read_message(reader)
+	msg_type, msg_buff, err := read_message_internal(reader)
 	if err != nil {
 		return nil, err
 	}
-	if msg_type != 11 {
+	if msg_type != kv_msg_extended_login {
 		return nil, errors.New("ndt: received invalid message")
 	}
 
-	// Process input as JSON message and valida its fields
+	// Process input as JSON message and validate its fields
 
 	el_msg := &extended_login_message_t{}
 	err = json.Unmarshal(msg_buff, &el_msg)
@@ -207,7 +223,7 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = write_standard_message(writer, 3, "3010")
+	err = write_standard_message(writer, kv_test_prepare, "3010")
 	if err != nil {
 		return err
 	}
@@ -230,7 +246,7 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer) error {
 
 	// Send empty TEST_START message to tell the client to start
 
-	err = write_standard_message(writer, 4, "")
+	err = write_standard_message(writer, kv_test_start, "")
 	if err != nil {
 		return err
 	}
@@ -274,7 +290,7 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = write_message_internal(writer, 5, data)
+	err = write_message_internal(writer, kv_test_msg, data)
 	if err != nil {
 		return err
 	}
@@ -285,7 +301,7 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer) error {
 	if err != nil {
 		return err
 	}
-	if msg_type != 5 {
+	if msg_type != kv_test_msg {
 		return errors.New("ndt: received unexpected message from client")
 	}
 	log.Printf("ndt: client measured speed: %s", msg_body)
@@ -294,7 +310,7 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer) error {
 
 	// Send the TEST_FINALIZE message that concludes the test
 
-	return write_standard_message(writer, 6, "")
+	return write_standard_message(writer, kv_test_finalize, "")
 }
 
 /*
@@ -310,11 +326,11 @@ func run_meta_test(reader *bufio.Reader, writer *bufio.Writer) error {
 
 	// Send empty TEST_PREPARE and TEST_START messages to the client
 
-	err := write_standard_message(writer, 3, "")
+	err := write_standard_message(writer, kv_test_prepare, "")
 	if err != nil {
 		return err
 	}
-	err = write_standard_message(writer, 4, "")
+	err = write_standard_message(writer, kv_test_start, "")
 	if err != nil {
 		return err
 	}
@@ -326,18 +342,18 @@ func run_meta_test(reader *bufio.Reader, writer *bufio.Writer) error {
 		if err != nil {
 			return err
 		}
-		if msg_type != 5 {
+		if msg_type != kv_test_msg {
 			return errors.New("ndt: expected TEST_MSG from client")
 		}
 		if msg_body == "" {
 			break
 		}
-		log.Println("ndt: metadata from client: %s", msg_body)
+		log.Printf("ndt: metadata from client: %s", msg_body)
 	}
 
 	// Send empty TEST_FINALIZE to client
 
-	return write_standard_message(writer, 6, "")
+	return write_standard_message(writer, kv_test_finalize, "")
 }
 
 /*
@@ -372,7 +388,7 @@ func handle_connection(conn net.Conn) {
 	// Write queue empty message
 	// TODO: here we should implement queue management
 
-	err = write_standard_message(writer, 1, "0")
+	err = write_standard_message(writer, kv_srv_queue, "0")
 	if err != nil {
 		log.Println("ndt: cannot write SRV_QUEUE message")
 		return
@@ -380,7 +396,8 @@ func handle_connection(conn net.Conn) {
 
 	// Write server version to client
 
-	err = write_standard_message(writer, 2, "v3.7.0 (botticelli/0.0.1)")
+	err = write_standard_message(writer, kv_msg_login,
+			"v3.7.0 (" + kv_product + ")")
 	if err != nil {
 		log.Println("ndt: cannot send our version to client")
 		return
@@ -389,8 +406,6 @@ func handle_connection(conn net.Conn) {
 	// Send list of encoded tests IDs
 
 	status := login_msg.Tests
-	status &= ^kv_test_status
-	status &= kv_implemented_tests
 	tests_message := ""
 	if (status & kv_test_s2c) != 0 {
 		tests_message += strconv.Itoa(kv_test_s2c)
@@ -399,7 +414,7 @@ func handle_connection(conn net.Conn) {
 	if (status & kv_test_meta) != 0 {
 		tests_message += strconv.Itoa(kv_test_meta)
 	}
-	err = write_standard_message(writer, 2, tests_message)
+	err = write_standard_message(writer, kv_msg_login, tests_message)
 	if err != nil {
 		log.Println("ndt: cannot send the list of tests to client")
 		return
@@ -426,7 +441,7 @@ func handle_connection(conn net.Conn) {
 
 	// Send empty MSG_LOGOUT to client
 
-	err = write_standard_message(writer, 9, "")
+	err = write_standard_message(writer, kv_msg_logout, "")
 	if err != nil {
 		return
 	}
