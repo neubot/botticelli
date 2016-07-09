@@ -297,7 +297,14 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer) error {
 	return write_standard_message(writer, 6, "")
 }
 
-// XXX: what about timeouts?
+/*
+ __  __ _____ _____  _
+|  \/  | ____|_   _|/ \
+| |\/| |  _|   | | / _ \
+| |  | | |___  | |/ ___ \
+|_|  |_|_____| |_/_/   \_\
+
+*/
 
 func run_meta_test(reader *bufio.Reader, writer *bufio.Writer) error {
 
@@ -332,6 +339,15 @@ func run_meta_test(reader *bufio.Reader, writer *bufio.Writer) error {
 
 	return write_standard_message(writer, 6, "")
 }
+
+/*
+ ____            _                  _
+|  _ \ _ __ ___ | |_ ___   ___ ___ | |
+| |_) | '__/ _ \| __/ _ \ / __/ _ \| |
+|  __/| | | (_) | || (_) | (_| (_) | |
+|_|   |_|  \___/ \__\___/ \___\___/|_|
+
+*/
 
 func handle_connection(conn net.Conn) {
 	reader := bufio.NewReader(conn)
@@ -415,6 +431,17 @@ func handle_connection(conn net.Conn) {
 		return
 	}
 }
+
+/*
+ ____        _     _ _           _    ____ ___
+|  _ \ _   _| |__ | (_) ___     / \  |  _ \_ _|
+| |_) | | | | '_ \| | |/ __|   / _ \ | |_) | |
+|  __/| |_| | |_) | | | (__   / ___ \|  __/| |
+|_|    \__,_|_.__/|_|_|\___| /_/   \_\_|  |___|
+
+*/
+
+// XXX: what about timeouts?
 
 func StartNdtServer(endpoint string) {
 	listener, err := net.Listen("tcp", endpoint)
