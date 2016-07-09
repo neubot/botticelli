@@ -6,6 +6,8 @@ import (
 )
 
 func main() {
+	StartNdtServer(":3001")
+
 	http.HandleFunc("/dash/download", DashDownload)
 	http.HandleFunc("/dash/download/", DashDownload)
 
