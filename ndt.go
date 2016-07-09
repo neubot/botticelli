@@ -35,6 +35,8 @@ const kv_test_status int = 16
 const kv_test_meta int = 32
 
 const kv_implemented_tests int = kv_test_s2c | kv_test_meta
+//const kv_parallel_streams int = 4 /*XXX*/
+const kv_parallel_streams int = 1
 
 const kv_product = "botticelli/0.0.1"
 
@@ -229,19 +231,15 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer) error {
 	}
 	defer listener.Close()
 
-	// Wait for client to connect and setup all variables
+	// Wait for client(s) to connect
 
-	conn, err := listener.Accept()
-	if err != nil {
-		return err
-	}
-	conn_writer := bufio.NewWriter(conn)
-	defer conn.Close()
-	output_buff := make([]byte, 8192)
-	for i := 0; i < len(output_buff); i += 1 {
-		// XXX seed the rng
-		// XXX fill the buffer
-		output_buff[i] = 'A'
+	conns := make([]net.Conn, kv_parallel_streams)
+	for idx := 0; idx < len(conns); idx += 1 {
+		conn, err := listener.Accept()
+		if err != nil {
+			return err
+		}
+		conns[idx] = conn
 	}
 
 	// Send empty TEST_START message to tell the client to start
@@ -251,32 +249,61 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer) error {
 		return err
 	}
 
-	// Send the buffer to the client for about ten seconds
-	// TODO: here we should take `web100` snapshots
-	// TODO: this could be refactored as a goroutine
+	// Run the N streams in parallel
 
-	start := time.Now()
-	bytes_sent := int64(0)
-	var elapsed time.Duration
-	for {
-		_, err = conn_writer.Write(output_buff)
-		if err != nil {
-			log.Println("ndt: failed to write to client")
-			break
-		}
-		err = conn_writer.Flush()
-		if err != nil {
-			log.Println("ndt: cannot flush connection with client")
-			break
-		}
-		bytes_sent += int64(len(output_buff))
-		elapsed = time.Since(start)
-		if elapsed.Seconds() > 10.0 {
-			log.Println("ndt: enough time elapsed")
-			break
-		}
+	channel := make(chan int64)
+
+	output_buff := make([]byte, 8192)
+	for i := 0; i < len(output_buff); i += 1 {
+		// XXX seed the rng
+		// XXX fill the buffer
+		output_buff[i] = 'A'
 	}
-	conn.Close() // Explicit to notify the client we're done
+	start := time.Now()
+
+	for idx := 0; idx < len(conns); idx += 1 {
+		log.Printf("ndt: start stream with id %d\n", idx)
+		go func(conn net.Conn) {
+			// Send the buffer to the client for about ten seconds
+			// TODO: here we should take `web100` snapshots
+
+			conn_writer := bufio.NewWriter(conn)
+			defer conn.Close()
+
+			for {
+				_, err = conn_writer.Write(output_buff)
+				if err != nil {
+					log.Println("ndt: failed to write to client")
+					break
+				}
+				err = conn_writer.Flush()
+				if err != nil {
+					log.Println("ndt: cannot flush connection with client")
+					break
+				}
+				channel <- int64(len(output_buff))
+				if time.Since(start).Seconds() > 10.0 {
+					log.Println("ndt: enough time elapsed")
+					break
+				}
+			}
+
+			conn.Close()   // Explicit to notify the client we're done
+			channel <- -1  // Tell the controller we're done
+		}(conns[idx])
+	}
+
+	bytes_sent := int64(0)
+	for num_complete := 0; num_complete < len(conns); {
+		count := <-channel
+		if count < 0 {
+			log.Printf("ndt: a stream just terminated...");
+			num_complete += 1
+			continue
+		}
+		bytes_sent += count
+	}
+	elapsed := time.Since(start)
 
 	// Send message containing what we measured
 
