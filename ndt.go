@@ -34,9 +34,7 @@ const kv_test_meta int = 32
 const kv_test_c2s_ext int = 64
 const kv_test_s2c_ext int = 128
 
-const kv_implemented_tests int = kv_test_s2c | kv_test_meta
-//const kv_parallel_streams int = 4 /*XXX*/
-const kv_parallel_streams int = 1
+const kv_parallel_streams int = 2
 
 const kv_product = "botticelli/0.0.1"
 
@@ -238,7 +236,12 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer,
 
 	// Wait for client(s) to connect
 
-	conns := make([]net.Conn, kv_parallel_streams)
+	nstreams := 1
+	if is_extended {
+		nstreams = kv_parallel_streams
+	}
+
+	conns := make([]net.Conn, nstreams)
 	for idx := 0; idx < len(conns); idx += 1 {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -401,7 +404,7 @@ func handle_connection(conn net.Conn) {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
 
-	// Read extended loging message
+	// Read extended login message
 
 	login_msg, err := read_extended_login(reader)
 	if err != nil {
