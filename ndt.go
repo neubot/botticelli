@@ -31,6 +31,8 @@ const kv_test_s2c int = 4
 const kv_test_sfw int = 8
 const kv_test_status int = 16
 const kv_test_meta int = 32
+const kv_test_c2s_ext int = 64
+const kv_test_s2c_ext int = 128
 
 const kv_implemented_tests int = kv_test_s2c | kv_test_meta
 //const kv_parallel_streams int = 4 /*XXX*/
@@ -214,7 +216,8 @@ type s2c_message_t struct {
 	TotalSentByte    string
 }
 
-func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer) error {
+func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer,
+		is_extended bool) error {
 
 	// Bind port and tell the port number to the server
 	// TODO: choose a random port instead than an hardcoded port
@@ -223,7 +226,11 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = write_standard_message(writer, kv_test_prepare, "3010")
+	prepare_message := "3010"
+	if is_extended {
+		prepare_message += " 10000.0 1 500.0 0.0 2"
+	}
+	err = write_standard_message(writer, kv_test_prepare, prepare_message)
 	if err != nil {
 		return err
 	}
@@ -436,6 +443,10 @@ func handle_connection(conn net.Conn) {
 		tests_message += strconv.Itoa(kv_test_s2c)
 		tests_message += " "
 	}
+	if (status & kv_test_s2c_ext) != 0 {
+		tests_message += strconv.Itoa(kv_test_s2c_ext)
+		tests_message += " "
+	}
 	if (status & kv_test_meta) != 0 {
 		tests_message += strconv.Itoa(kv_test_meta)
 	}
@@ -448,9 +459,16 @@ func handle_connection(conn net.Conn) {
 	// Run tests
 
 	if (status & kv_test_s2c) != 0 {
-		err = run_s2c_test(reader, writer)
+		err = run_s2c_test(reader, writer, false)
 		if err != nil {
 			log.Println("ndt: failure running s2c test")
+			return
+		}
+	}
+	if (status & kv_test_s2c_ext) != 0 {
+		err = run_s2c_test(reader, writer, true)
+		if err != nil {
+			log.Println("ndt: failure to run s2c_ext test")
 			return
 		}
 	}
