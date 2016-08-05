@@ -426,7 +426,7 @@ func update_queue_pos(reader *bufio.Reader, writer *bufio.Writer,
 	return nil
 }
 
-func handle_connection(conn net.Conn) {
+func handle_connection(channel chan int, conn net.Conn) {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
 
@@ -447,16 +447,18 @@ func handle_connection(conn net.Conn) {
 	}
 
 	// Queue management
-	// The following is non-standard: we tell the client it is in queue
-	// to test whether the behavior wrt queuing is correct
 
-	for i := 10; i > 0; i -= 1 {
-		err = update_queue_pos(reader, writer, i)
+	for {
+		position := <-channel
+		log.Println("ndt: position in queue", position)
+		if position <= 0 {
+			break
+		}
+		err = update_queue_pos(reader, writer, position)
 		if err != nil {
 			log.Println("ndt: failed to update client of its queue position")
 			return
 		}
-		time.Sleep(1 * time.Second)
 	}
 
 	// Write queue empty message
@@ -548,12 +550,17 @@ func StartNdtServer(endpoint string) {
 		log.Fatal(err)
 	}
 	for {
+		channel := make(chan int)
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Println("ndt: accept() failed")
 			continue
 		}
 		defer conn.Close()
-		go handle_connection(conn)
+		go handle_connection(channel, conn)
+
+		// XXX Initially send 1 to test channel behavior then 0 to unblock
+		channel <- 1
+		channel <- 0
 	}
 }
