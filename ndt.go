@@ -426,7 +426,9 @@ func update_queue_pos(reader *bufio.Reader, writer *bufio.Writer,
 	return nil
 }
 
-func handle_connection(channel chan int, conn net.Conn) {
+var kv_test_pending bool = false
+
+func handle_connection(conn net.Conn) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
@@ -449,19 +451,23 @@ func handle_connection(channel chan int, conn net.Conn) {
 	}
 
 	// Queue management
+	// XXX The current implementation of queue management is minimal, and
+	// possibly also very ugly and stupid. Must be improved.
 
-	for {
-		position := <-channel
-		log.Println("ndt: position in queue", position)
-		if position <= 0 {
-			break
-		}
-		err = update_queue_pos(reader, writer, position)
+	for kv_test_pending {
+		err = update_queue_pos(reader, writer, 1)
 		if err != nil {
 			log.Println("ndt: failed to update client of its queue position")
 			return
 		}
+		time.Sleep(3.0 * time.Second)
 	}
+	log.Println("ndt: this test is now running")
+	kv_test_pending = true
+	defer func() {
+		log.Println("ndt: test complete; allowing another test to run")
+		kv_test_pending = false
+	}()
 
 	// Write queue empty message
 
@@ -557,11 +563,6 @@ func StartNdtServer(endpoint string) {
 			log.Println("ndt: accept() failed")
 			continue
 		}
-		channel := make(chan int)
-		go handle_connection(channel, conn)
-
-		// XXX Initially send 1 to test channel behavior then 0 to unblock
-		channel <- 1
-		channel <- 0
+		go handle_connection(conn)
 	}
 }
