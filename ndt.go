@@ -550,12 +550,12 @@ func StartNdtServer(endpoint string) {
 		log.Fatal(err)
 	}
 	for {
-		channel := make(chan int)
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Println("ndt: accept() failed")
 			continue
 		}
+		channel := make(chan int)
 		defer conn.Close()
 		go handle_connection(channel, conn)
 
