@@ -427,6 +427,8 @@ func update_queue_pos(reader *bufio.Reader, writer *bufio.Writer,
 }
 
 func handle_connection(channel chan int, conn net.Conn) {
+	defer conn.Close()
+
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
 
@@ -556,7 +558,6 @@ func StartNdtServer(endpoint string) {
 			continue
 		}
 		channel := make(chan int)
-		defer conn.Close()
 		go handle_connection(channel, conn)
 
 		// XXX Initially send 1 to test channel behavior then 0 to unblock
