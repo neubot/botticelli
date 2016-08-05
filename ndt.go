@@ -34,9 +34,14 @@ const kv_test_meta int = 32
 const kv_test_c2s_ext int = 64
 const kv_test_s2c_ext int = 128
 
+const kv_srv_queue_heartbeat string = "9990"
+const kv_srv_queue_server_fault string = "9977"
+const kv_srv_queue_server_busy string = "9987"
+const kv_srv_queue_server_busy_60s string = "9999"
+
 const kv_parallel_streams int = 2
 
-const kv_product = "botticelli/0.0.1"
+const kv_product = "botticelli/0.0.1-dev"
 
 /*
  __  __
@@ -139,6 +144,7 @@ func write_message_internal(writer *bufio.Writer, message_type byte,
 
 func write_standard_message(writer *bufio.Writer, message_type byte,
 	message_body string) error {
+
 	s_msg := &standard_message_t{
 		Msg: message_body,
 	}
@@ -400,6 +406,26 @@ func run_meta_test(reader *bufio.Reader, writer *bufio.Writer) error {
 
 */
 
+func update_queue_pos(reader *bufio.Reader, writer *bufio.Writer,
+                      position int) error {
+	err := write_standard_message(writer, kv_srv_queue, strconv.Itoa(position))
+	if err != nil {
+		return errors.New("ndt: cannot write SRV_QUEUE message")
+	}
+	err = write_standard_message(writer, kv_srv_queue, kv_srv_queue_heartbeat)
+	if err != nil {
+		return errors.New("ndt: cannot write SRV_QUEUE heartbeat message")
+	}
+	msg_type, _, err := read_standard_message(reader)
+	if err != nil {
+		return errors.New("ndt: cannot read MSG_WAITING message")
+	}
+	if msg_type != kv_msg_waiting {
+		return errors.New("ndt: received unexpected message from client")
+	}
+	return nil
+}
+
 func handle_connection(conn net.Conn) {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
@@ -420,8 +446,20 @@ func handle_connection(conn net.Conn) {
 		return
 	}
 
+	// Queue management
+	// The following is non-standard: we tell the client it is in queue
+	// to test whether the behavior wrt queuing is correct
+
+	for i := 10; i > 0; i -= 1 {
+		err = update_queue_pos(reader, writer, i)
+		if err != nil {
+			log.Println("ndt: failed to update client of its queue position")
+			return
+		}
+		time.Sleep(1 * time.Second)
+	}
+
 	// Write queue empty message
-	// TODO: here we should implement queue management
 
 	err = write_standard_message(writer, kv_srv_queue, "0")
 	if err != nil {
