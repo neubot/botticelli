@@ -48,7 +48,7 @@ func DashDownload(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "video/mp4")
 	w.Header().Set("Content-Length", resource_size)
-	w.Write(RandByte(body_size))
+	w.Write(RandByteMaskingImproved(body_size))
 }
 
 func DashNegotiate(w http.ResponseWriter, r *http.Request) {

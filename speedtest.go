@@ -20,7 +20,7 @@ func SpeedtestDownload(w http.ResponseWriter, r *http.Request) {
 
 		start_time := time.Now()
 		for time.Since(start_time).Seconds() >= TARGET {
-			w.Write(RandByte(CHUNK))
+			w.Write(RandByteMaskingImproved(CHUNK))
 		}
 		return
 	}
@@ -38,7 +38,7 @@ func SpeedtestDownload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Write(RandByte(ranges_int[1] - ranges_int[0] - 1))
+	w.Write(RandByteMaskingImproved(ranges_int[1] - ranges_int[0] - 1))
 
 }
 
