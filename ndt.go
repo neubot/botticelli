@@ -41,8 +41,6 @@ const kv_srv_queue_server_busy_60s string = "9999"
 
 const kv_parallel_streams int = 2
 
-const kv_product = "botticelli/0.0.1-dev"
-
 /*
  __  __
 |  \/  | ___  ___ ___  __ _  __ _  ___  ___
@@ -485,7 +483,7 @@ func handle_connection(cc net.Conn) {
 	// Write server version to client
 
 	err = write_standard_message(cc, writer, kv_msg_login,
-			"v3.7.0 (" + kv_product + ")")
+			"v3.7.0 (" + Product + ")")
 	if err != nil {
 		log.Println("ndt: cannot send our version to client")
 		return
