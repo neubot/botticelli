@@ -1,8 +1,8 @@
 package main
 
 import (
-	"log"
-	"net/http"
+	//"log"
+	//"net/http"
 	"math/rand"
 	"time"
 )
