@@ -126,7 +126,6 @@ func write_message_internal(cc net.Conn, writer *bufio.Writer,
 	}
 
 	// 2. write length
-	// TODO: make sure endianness conversion is performed correctly
 
 	if len(encoded_body) > 65535 {
 		return errors.New("ndt: encoded_body is too long")
