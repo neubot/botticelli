@@ -68,7 +68,6 @@ func read_message_internal(cc net.Conn, reader io.Reader) (
 	log.Printf("ndt: message type: %d", msg_type)
 
 	// 2. read length
-	// TODO: make sure we do endianness conversion correctly
 
 	len_buff := make([]byte, 2)
 	_, err = DoReadFull(cc, reader, len_buff)
