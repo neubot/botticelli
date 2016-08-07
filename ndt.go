@@ -276,12 +276,7 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 
 	channel := make(chan int64)
 
-	output_buff := make([]byte, 8192)
-	for i := 0; i < len(output_buff); i += 1 {
-		// XXX seed the rng
-		// XXX fill the buffer
-		output_buff[i] = 'A'
-	}
+	output_buff := RandAsciiRemainder(8192)
 	start := time.Now()
 
 	for idx := 0; idx < len(conns); idx += 1 {
