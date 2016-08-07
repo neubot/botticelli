@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+if [ $# -ne 2 ]; then
+    echo "usage: $0 old-version new-version" 1>&2
+    exit 1
+fi
+
+sed "s/^const Version = \"$1\"$/const Version = \"$2\"/g" version.go \
+        > version.go.new
+if cmp version.go version.go.new 1>/dev/null 2>/dev/null; then
+    echo "fatal: version.go seems to be unchanged" 1>&2
+    exit 1
+fi
+mv version.go.new version.go
+
+mv ChangeLog.md ChangeLog.md.old
+echo "# botticelli $2 [`date +%Y-%m-%d`]" > ChangeLog.md
+echo "" >> ChangeLog.md
+cat ChangeLog.md.old >> ChangeLog.md
+rm ChangeLog.md.old
