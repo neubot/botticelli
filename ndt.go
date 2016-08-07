@@ -103,6 +103,9 @@ func read_standard_message(reader io.Reader) (byte, string, error) {
 	if err != nil {
 		return 0, "", err
 	}
+	if s_msg == nil {
+		return 0, "", errors.New("ndt: received literal 'null'")
+	}
 	return msg_type, s_msg.Msg, nil
 }
 
@@ -181,6 +184,9 @@ func read_extended_login(reader io.Reader) (*extended_login_message_t, error) {
 	err = json.Unmarshal(msg_buff, &el_msg)
 	if err != nil {
 		return nil, err
+	}
+	if el_msg == nil {
+		return nil, errors.New("ndt: received literal 'null'")
 	}
 	log.Printf("ndt: client version: %s", el_msg.Msg)
 	log.Printf("ndt: test suite: %s", el_msg.TestsStr)
