@@ -60,7 +60,7 @@ func read_message_internal(cc net.Conn, reader io.Reader) (
 	// 1. read type
 
 	type_buff := make([]byte, 1)
-	_, err := io.ReadFull(reader, type_buff)
+	_, err := DoReadFull(cc, reader, type_buff)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -71,7 +71,7 @@ func read_message_internal(cc net.Conn, reader io.Reader) (
 	// TODO: make sure we do endianness conversion correctly
 
 	len_buff := make([]byte, 2)
-	_, err = io.ReadFull(reader, len_buff)
+	_, err = DoReadFull(cc, reader, len_buff)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -81,7 +81,7 @@ func read_message_internal(cc net.Conn, reader io.Reader) (
 	// 3. read body
 
 	msg_body := make([]byte, msg_length)
-	_, err = io.ReadFull(reader, msg_body)
+	_, err = DoReadFull(cc, reader, msg_body)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -120,7 +120,7 @@ func write_message_internal(cc net.Conn, writer *bufio.Writer,
 
 	// 1. write type
 
-	err := writer.WriteByte(message_type)
+	err := DoWriteByte(cc, writer, message_type)
 	if err != nil {
 		return err
 	}
@@ -133,18 +133,18 @@ func write_message_internal(cc net.Conn, writer *bufio.Writer,
 	}
 	encoded_len := make([]byte, 2)
 	binary.BigEndian.PutUint16(encoded_len, uint16(len(encoded_body)))
-	_, err = writer.Write(encoded_len)
+	_, err = DoWrite(cc, writer, encoded_len)
 	if err != nil {
 		return err
 	}
 
 	// 3. write message body
 
-	_, err = writer.Write(encoded_body)
+	_, err = DoWrite(cc, writer, encoded_body)
 	if err != nil {
 		return err
 	}
-	return writer.Flush()
+	return DoFlush(cc, writer)
 }
 
 func write_standard_message(cc net.Conn, writer *bufio.Writer,
@@ -207,11 +207,11 @@ func read_extended_login(cc net.Conn, reader io.Reader) (
 
 func write_raw_string(cc net.Conn, writer *bufio.Writer, str string) error {
 	log.Printf("ndt: write raw string: '%s'", str)
-	_, err := writer.WriteString(str)
+	_, err := DoWriteString(cc, writer, str)
 	if err != nil {
 		return err
 	}
-	return writer.Flush()
+	return DoFlush(cc, writer)
 }
 
 /*
@@ -294,12 +294,12 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 			defer conn.Close()
 
 			for {
-				_, err = conn_writer.Write(output_buff)
+				_, err = DoWrite(conn, conn_writer, output_buff)
 				if err != nil {
 					log.Println("ndt: failed to write to client")
 					break
 				}
-				err = conn_writer.Flush()
+				err = DoFlush(conn, conn_writer)
 				if err != nil {
 					log.Println("ndt: cannot flush connection with client")
 					break
@@ -561,8 +561,6 @@ func handle_connection(cc net.Conn) {
 |_|    \__,_|_.__/|_|_|\___| /_/   \_\_|  |___|
 
 */
-
-// XXX: what about timeouts?
 
 func StartNdtServer(endpoint string) {
 	listener, err := net.Listen("tcp", endpoint)
