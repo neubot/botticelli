@@ -54,7 +54,8 @@ const kv_product = "botticelli/0.0.1-dev"
 	Message serialization and deserialization.
 */
 
-func read_message_internal(reader io.Reader) (byte, []byte, error) {
+func read_message_internal(cc net.Conn, reader io.Reader) (
+                           byte, []byte, error) {
 
 	// 1. read type
 
@@ -93,8 +94,9 @@ type standard_message_t struct {
 	Msg string `json:"msg"`
 }
 
-func read_standard_message(reader io.Reader) (byte, string, error) {
-	msg_type, msg_buff, err := read_message_internal(reader)
+func read_standard_message(cc net.Conn, reader io.Reader) (
+                           byte, string, error) {
+	msg_type, msg_buff, err := read_message_internal(cc, reader)
 	if err != nil {
 		return 0, "", err
 	}
@@ -109,8 +111,8 @@ func read_standard_message(reader io.Reader) (byte, string, error) {
 	return msg_type, s_msg.Msg, nil
 }
 
-func write_message_internal(writer *bufio.Writer, message_type byte,
-	encoded_body []byte) error {
+func write_message_internal(cc net.Conn, writer *bufio.Writer,
+                            message_type byte, encoded_body []byte) error {
 
 	log.Printf("ndt: write any message: type=%d\n", message_type)
 	log.Printf("ndt: write any message: length=%d\n", len(encoded_body))
@@ -145,8 +147,8 @@ func write_message_internal(writer *bufio.Writer, message_type byte,
 	return writer.Flush()
 }
 
-func write_standard_message(writer *bufio.Writer, message_type byte,
-	message_body string) error {
+func write_standard_message(cc net.Conn, writer *bufio.Writer,
+                            message_type byte, message_body string) error {
 
 	s_msg := &standard_message_t{
 		Msg: message_body,
@@ -157,7 +159,7 @@ func write_standard_message(writer *bufio.Writer, message_type byte,
 	if err != nil {
 		return err
 	}
-	return write_message_internal(writer, message_type, data)
+	return write_message_internal(cc, writer, message_type, data)
 }
 
 type extended_login_message_t struct {
@@ -166,11 +168,12 @@ type extended_login_message_t struct {
 	Tests    int
 }
 
-func read_extended_login(reader io.Reader) (*extended_login_message_t, error) {
+func read_extended_login(cc net.Conn, reader io.Reader) (
+                         *extended_login_message_t, error) {
 
 	// Read ordinary message
 
-	msg_type, msg_buff, err := read_message_internal(reader)
+	msg_type, msg_buff, err := read_message_internal(cc, reader)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +205,7 @@ func read_extended_login(reader io.Reader) (*extended_login_message_t, error) {
 	return el_msg, nil
 }
 
-func write_raw_string(writer *bufio.Writer, str string) error {
+func write_raw_string(cc net.Conn, writer *bufio.Writer, str string) error {
 	log.Printf("ndt: write raw string: '%s'", str)
 	_, err := writer.WriteString(str)
 	if err != nil {
@@ -226,8 +229,8 @@ type s2c_message_t struct {
 	TotalSentByte    string
 }
 
-func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer,
-		is_extended bool) error {
+func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
+                  is_extended bool) error {
 
 	// Bind port and tell the port number to the server
 	// TODO: choose a random port instead than an hardcoded port
@@ -240,7 +243,7 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer,
 	if is_extended {
 		prepare_message += " 10000.0 1 500.0 0.0 2"
 	}
-	err = write_standard_message(writer, kv_test_prepare, prepare_message)
+	err = write_standard_message(cc, writer, kv_test_prepare, prepare_message)
 	if err != nil {
 		return err
 	}
@@ -264,7 +267,7 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer,
 
 	// Send empty TEST_START message to tell the client to start
 
-	err = write_standard_message(writer, kv_test_start, "")
+	err = write_standard_message(cc, writer, kv_test_start, "")
 	if err != nil {
 		return err
 	}
@@ -337,14 +340,14 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer,
 	if err != nil {
 		return err
 	}
-	err = write_message_internal(writer, kv_test_msg, data)
+	err = write_message_internal(cc, writer, kv_test_msg, data)
 	if err != nil {
 		return err
 	}
 
 	// Receive message from client containing its measured speed
 
-	msg_type, msg_body, err := read_standard_message(reader)
+	msg_type, msg_body, err := read_standard_message(cc, reader)
 	if err != nil {
 		return err
 	}
@@ -357,7 +360,7 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer,
 
 	// Send the TEST_FINALIZE message that concludes the test
 
-	return write_standard_message(writer, kv_test_finalize, "")
+	return write_standard_message(cc, writer, kv_test_finalize, "")
 }
 
 /*
@@ -369,15 +372,16 @@ func run_s2c_test(reader *bufio.Reader, writer *bufio.Writer,
 
 */
 
-func run_meta_test(reader *bufio.Reader, writer *bufio.Writer) error {
+func run_meta_test(cc net.Conn, reader *bufio.Reader,
+                   writer *bufio.Writer) error {
 
 	// Send empty TEST_PREPARE and TEST_START messages to the client
 
-	err := write_standard_message(writer, kv_test_prepare, "")
+	err := write_standard_message(cc, writer, kv_test_prepare, "")
 	if err != nil {
 		return err
 	}
-	err = write_standard_message(writer, kv_test_start, "")
+	err = write_standard_message(cc, writer, kv_test_start, "")
 	if err != nil {
 		return err
 	}
@@ -385,7 +389,7 @@ func run_meta_test(reader *bufio.Reader, writer *bufio.Writer) error {
 	// Read a sequence of TEST_MSGs from client
 
 	for {
-		msg_type, msg_body, err := read_standard_message(reader)
+		msg_type, msg_body, err := read_standard_message(cc, reader)
 		if err != nil {
 			return err
 		}
@@ -400,7 +404,7 @@ func run_meta_test(reader *bufio.Reader, writer *bufio.Writer) error {
 
 	// Send empty TEST_FINALIZE to client
 
-	return write_standard_message(writer, kv_test_finalize, "")
+	return write_standard_message(cc, writer, kv_test_finalize, "")
 }
 
 /*
@@ -412,17 +416,19 @@ func run_meta_test(reader *bufio.Reader, writer *bufio.Writer) error {
 
 */
 
-func update_queue_pos(reader *bufio.Reader, writer *bufio.Writer,
+func update_queue_pos(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
                       position int) error {
-	err := write_standard_message(writer, kv_srv_queue, strconv.Itoa(position))
+	err := write_standard_message(cc, writer, kv_srv_queue,
+			strconv.Itoa(position))
 	if err != nil {
 		return errors.New("ndt: cannot write SRV_QUEUE message")
 	}
-	err = write_standard_message(writer, kv_srv_queue, kv_srv_queue_heartbeat)
+	err = write_standard_message(cc, writer, kv_srv_queue,
+			kv_srv_queue_heartbeat)
 	if err != nil {
 		return errors.New("ndt: cannot write SRV_QUEUE heartbeat message")
 	}
-	msg_type, _, err := read_standard_message(reader)
+	msg_type, _, err := read_standard_message(cc, reader)
 	if err != nil {
 		return errors.New("ndt: cannot read MSG_WAITING message")
 	}
@@ -434,15 +440,15 @@ func update_queue_pos(reader *bufio.Reader, writer *bufio.Writer,
 
 var kv_test_pending bool = false
 
-func handle_connection(conn net.Conn) {
-	defer conn.Close()
+func handle_connection(cc net.Conn) {
+	defer cc.Close()
 
-	reader := bufio.NewReader(conn)
-	writer := bufio.NewWriter(conn)
+	reader := bufio.NewReader(cc)
+	writer := bufio.NewWriter(cc)
 
 	// Read extended login message
 
-	login_msg, err := read_extended_login(reader)
+	login_msg, err := read_extended_login(cc, reader)
 	if err != nil {
 		log.Println("ndt: cannot read extended login")
 		return
@@ -450,7 +456,7 @@ func handle_connection(conn net.Conn) {
 
 	// Write kickoff message
 
-	err = write_raw_string(writer, "123456 654321")
+	err = write_raw_string(cc, writer, "123456 654321")
 	if err != nil {
 		log.Println("ndt: cannot write kickoff message")
 		return
@@ -461,7 +467,7 @@ func handle_connection(conn net.Conn) {
 	// possibly also very ugly and stupid. Must be improved.
 
 	for kv_test_pending {
-		err = update_queue_pos(reader, writer, 1)
+		err = update_queue_pos(cc, reader, writer, 1)
 		if err != nil {
 			log.Println("ndt: failed to update client of its queue position")
 			return
@@ -477,7 +483,7 @@ func handle_connection(conn net.Conn) {
 
 	// Write queue empty message
 
-	err = write_standard_message(writer, kv_srv_queue, "0")
+	err = write_standard_message(cc, writer, kv_srv_queue, "0")
 	if err != nil {
 		log.Println("ndt: cannot write SRV_QUEUE message")
 		return
@@ -485,7 +491,7 @@ func handle_connection(conn net.Conn) {
 
 	// Write server version to client
 
-	err = write_standard_message(writer, kv_msg_login,
+	err = write_standard_message(cc, writer, kv_msg_login,
 			"v3.7.0 (" + kv_product + ")")
 	if err != nil {
 		log.Println("ndt: cannot send our version to client")
@@ -507,7 +513,7 @@ func handle_connection(conn net.Conn) {
 	if (status & kv_test_meta) != 0 {
 		tests_message += strconv.Itoa(kv_test_meta)
 	}
-	err = write_standard_message(writer, kv_msg_login, tests_message)
+	err = write_standard_message(cc, writer, kv_msg_login, tests_message)
 	if err != nil {
 		log.Println("ndt: cannot send the list of tests to client")
 		return
@@ -516,21 +522,21 @@ func handle_connection(conn net.Conn) {
 	// Run tests
 
 	if (status & kv_test_s2c) != 0 {
-		err = run_s2c_test(reader, writer, false)
+		err = run_s2c_test(cc, reader, writer, false)
 		if err != nil {
 			log.Println("ndt: failure running s2c test")
 			return
 		}
 	}
 	if (status & kv_test_s2c_ext) != 0 {
-		err = run_s2c_test(reader, writer, true)
+		err = run_s2c_test(cc, reader, writer, true)
 		if err != nil {
 			log.Println("ndt: failure to run s2c_ext test")
 			return
 		}
 	}
 	if (status & kv_test_meta) != 0 {
-		err = run_meta_test(reader, writer)
+		err = run_meta_test(cc, reader, writer)
 		if err != nil {
 			log.Println("ndt: failure running meta test")
 			return
@@ -541,7 +547,7 @@ func handle_connection(conn net.Conn) {
 
 	// Send empty MSG_LOGOUT to client
 
-	err = write_standard_message(writer, kv_msg_logout, "")
+	err = write_standard_message(cc, writer, kv_msg_logout, "")
 	if err != nil {
 		return
 	}
@@ -564,11 +570,11 @@ func StartNdtServer(endpoint string) {
 		log.Fatal(err)
 	}
 	for {
-		conn, err := listener.Accept()
+		cc, err := listener.Accept()
 		if err != nil {
 			log.Println("ndt: accept() failed")
 			continue
 		}
-		go handle_connection(conn)
+		go handle_connection(cc)
 	}
 }
