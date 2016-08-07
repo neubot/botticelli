@@ -14,6 +14,8 @@ func main() {
 
 	StartNdtServer(":3001")
 
+	// Disabled: for now we shall coexist with neubot-server
+/*
 	http.HandleFunc("/dash/download", DashDownload)
 	http.HandleFunc("/dash/download/", DashDownload)
 
@@ -33,4 +35,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+*/
 }
