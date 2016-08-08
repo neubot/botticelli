@@ -39,7 +39,7 @@ const kv_srv_queue_server_fault string = "9977"
 const kv_srv_queue_server_busy string = "9987"
 const kv_srv_queue_server_busy_60s string = "9999"
 
-const kv_parallel_streams int = 2
+const kv_parallel_streams int = 3
 
 /*
  __  __
@@ -237,7 +237,8 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 	}
 	prepare_message := "3010"
 	if is_extended {
-		prepare_message += " 10000.0 1 500.0 0.0 2"
+		prepare_message += " 10000.0 1 500.0 0.0 "
+		prepare_message += strconv.Itoa(kv_parallel_streams)
 	}
 	err = write_standard_message(cc, writer, kv_test_prepare, prepare_message)
 	if err != nil {
