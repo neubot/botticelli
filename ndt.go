@@ -494,12 +494,12 @@ func handle_connection(cc net.Conn) {
 
 	status := login_msg.Tests
 	tests_message := ""
-	if (status & kv_test_s2c) != 0 {
-		tests_message += strconv.Itoa(kv_test_s2c)
-		tests_message += " "
-	}
 	if (status & kv_test_s2c_ext) != 0 {
 		tests_message += strconv.Itoa(kv_test_s2c_ext)
+		tests_message += " "
+	}
+	if (status & kv_test_s2c) != 0 {
+		tests_message += strconv.Itoa(kv_test_s2c)
 		tests_message += " "
 	}
 	if (status & kv_test_meta) != 0 {
@@ -513,17 +513,17 @@ func handle_connection(cc net.Conn) {
 
 	// Run tests
 
-	if (status & kv_test_s2c) != 0 {
-		err = run_s2c_test(cc, reader, writer, false)
-		if err != nil {
-			log.Println("ndt: failure running s2c test")
-			return
-		}
-	}
 	if (status & kv_test_s2c_ext) != 0 {
 		err = run_s2c_test(cc, reader, writer, true)
 		if err != nil {
 			log.Println("ndt: failure to run s2c_ext test")
+			return
+		}
+	}
+	if (status & kv_test_s2c) != 0 {
+		err = run_s2c_test(cc, reader, writer, false)
+		if err != nil {
+			log.Println("ndt: failure running s2c test")
 			return
 		}
 	}
