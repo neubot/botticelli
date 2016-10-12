@@ -39,7 +39,7 @@ const kv_srv_queue_server_fault string = "9977"
 const kv_srv_queue_server_busy string = "9987"
 const kv_srv_queue_server_busy_60s string = "9999"
 
-const kv_parallel_streams int = 3
+const kv_parallel_streams int = 4
 
 /*
  __  __
