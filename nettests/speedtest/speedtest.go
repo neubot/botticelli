@@ -11,13 +11,13 @@ import (
 const TARGET = 5
 const CHUNK = 8192
 
-func SpeedtestNegotiate(w http.ResponseWriter, r *http.Request) {
+func Negotiate(w http.ResponseWriter, r *http.Request) {
 }
 
-func SpeedtestCollect(w http.ResponseWriter, r *http.Request) {
+func Collect(w http.ResponseWriter, r *http.Request) {
 }
 
-func SpeedtestDownload(w http.ResponseWriter, r *http.Request) {
+func Download(w http.ResponseWriter, r *http.Request) {
 
 	if r.Header.Get("range") != "" {
 		w.Header().Set("Content-Type", "application/octet-stream")
@@ -46,11 +46,11 @@ func SpeedtestDownload(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func SpeedtestLatency(w http.ResponseWriter, r *http.Request) {
+func Latency(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(""))
 
 }
 
-func SpeedtestUpload(w http.ResponseWriter, r *http.Request) {
+func Upload(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(""))
 }

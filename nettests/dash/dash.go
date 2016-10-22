@@ -12,7 +12,7 @@ const default_body_size = 1000
 const maximum_body_size = 104857600
 const maximum_repetitions = 60
 
-func DashDownload(w http.ResponseWriter, r *http.Request) {
+func Download(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	// For robustness

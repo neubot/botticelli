@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/bassosimone/botticelli/common"
+	"github.com/bassosimone/botticelli/common/negotiate"
 	//"github.com/bassosimone/botticelli/nettests/bittorrent"
 	"github.com/bassosimone/botticelli/nettests/dash"
 	"github.com/bassosimone/botticelli/nettests/ndt"
@@ -18,19 +18,19 @@ func main() {
 	//   see <http://stackoverflow.com/a/12321192>
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	ndt.StartNdtServer(":3001")
+	ndt.Start(":3001")
 
-	http.HandleFunc("/dash/download", dash.DashDownload)
-	http.HandleFunc("/dash/download/", dash.DashDownload)
+	http.HandleFunc("/dash/download", dash.Download)
+	http.HandleFunc("/dash/download/", dash.Download)
 
-	http.HandleFunc("/collect/", common.NegotiateCollect)
-	http.HandleFunc("/negotiate/", common.NegotiateNegotiate)
+	http.HandleFunc("/collect/", negotiate.Collect)
+	http.HandleFunc("/negotiate/", negotiate.Negotiate)
 
-	http.HandleFunc("/speedtest/collect", speedtest.SpeedtestCollect)
-	http.HandleFunc("/speedtest/latency", speedtest.SpeedtestLatency)
-	http.HandleFunc("/speedtest/negotiate", speedtest.SpeedtestNegotiate)
-	http.HandleFunc("/speedtest/download", speedtest.SpeedtestDownload)
-	http.HandleFunc("/speedtest/upload", speedtest.SpeedtestUpload)
+	http.HandleFunc("/speedtest/collect", speedtest.Collect)
+	http.HandleFunc("/speedtest/latency", speedtest.Latency)
+	http.HandleFunc("/speedtest/negotiate", speedtest.Negotiate)
+	http.HandleFunc("/speedtest/download", speedtest.Download)
+	http.HandleFunc("/speedtest/upload", speedtest.Upload)
 
 	http.HandleFunc("/", http.NotFound)
 

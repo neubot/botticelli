@@ -555,7 +555,7 @@ func handle_connection(cc net.Conn) {
 
 */
 
-func StartNdtServer(endpoint string) {
+func Start(endpoint string) {
 	listener, err := net.Listen("tcp", endpoint)
 	if err != nil {
 		log.Fatal(err)

@@ -1,4 +1,4 @@
-package common
+package negotiate
 
 import (
 	"encoding/json"
@@ -24,7 +24,7 @@ func addressWithoutPort(s string) (string, error) {
 	return match[1], nil
 }
 
-func NegotiateCollect(w http.ResponseWriter, r *http.Request) {
+func Collect(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte("{}"))
 }
@@ -50,7 +50,7 @@ func NegotiateDefaultNegotiate(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func NegotiateNegotiate(w http.ResponseWriter, r *http.Request) {
+func Negotiate(w http.ResponseWriter, r *http.Request) {
 
 	// Find name of the module for which we are negotiating
 
