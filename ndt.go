@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"github.com/bassosimone/botticelli/common"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -58,7 +59,7 @@ func read_message_internal(cc net.Conn, reader io.Reader) (
 	// 1. read type
 
 	type_buff := make([]byte, 1)
-	_, err := DoReadFull(cc, reader, type_buff)
+	_, err := common.DoReadFull(cc, reader, type_buff)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -68,7 +69,7 @@ func read_message_internal(cc net.Conn, reader io.Reader) (
 	// 2. read length
 
 	len_buff := make([]byte, 2)
-	_, err = DoReadFull(cc, reader, len_buff)
+	_, err = common.DoReadFull(cc, reader, len_buff)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -78,7 +79,7 @@ func read_message_internal(cc net.Conn, reader io.Reader) (
 	// 3. read body
 
 	msg_body := make([]byte, msg_length)
-	_, err = DoReadFull(cc, reader, msg_body)
+	_, err = common.DoReadFull(cc, reader, msg_body)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -117,7 +118,7 @@ func write_message_internal(cc net.Conn, writer *bufio.Writer,
 
 	// 1. write type
 
-	err := DoWriteByte(cc, writer, message_type)
+	err := common.DoWriteByte(cc, writer, message_type)
 	if err != nil {
 		return err
 	}
@@ -129,18 +130,18 @@ func write_message_internal(cc net.Conn, writer *bufio.Writer,
 	}
 	encoded_len := make([]byte, 2)
 	binary.BigEndian.PutUint16(encoded_len, uint16(len(encoded_body)))
-	_, err = DoWrite(cc, writer, encoded_len)
+	_, err = common.DoWrite(cc, writer, encoded_len)
 	if err != nil {
 		return err
 	}
 
 	// 3. write message body
 
-	_, err = DoWrite(cc, writer, encoded_body)
+	_, err = common.DoWrite(cc, writer, encoded_body)
 	if err != nil {
 		return err
 	}
-	return DoFlush(cc, writer)
+	return common.DoFlush(cc, writer)
 }
 
 func write_standard_message(cc net.Conn, writer *bufio.Writer,
@@ -203,11 +204,11 @@ func read_extended_login(cc net.Conn, reader io.Reader) (
 
 func write_raw_string(cc net.Conn, writer *bufio.Writer, str string) error {
 	log.Printf("ndt: write raw string: '%s'", str)
-	_, err := DoWriteString(cc, writer, str)
+	_, err := common.DoWriteString(cc, writer, str)
 	if err != nil {
 		return err
 	}
-	return DoFlush(cc, writer)
+	return common.DoFlush(cc, writer)
 }
 
 /*
@@ -273,7 +274,7 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 
 	channel := make(chan int64)
 
-	output_buff := RandAsciiRemainder(8192)
+	output_buff := common.RandAsciiRemainder(8192)
 	start := time.Now()
 
 	for idx := 0; idx < len(conns); idx += 1 {
@@ -286,12 +287,12 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 			defer conn.Close()
 
 			for {
-				_, err = DoWrite(conn, conn_writer, output_buff)
+				_, err = common.DoWrite(conn, conn_writer, output_buff)
 				if err != nil {
 					log.Println("ndt: failed to write to client")
 					break
 				}
-				err = DoFlush(conn, conn_writer)
+				err = common.DoFlush(conn, conn_writer)
 				if err != nil {
 					log.Println("ndt: cannot flush connection with client")
 					break
@@ -484,7 +485,7 @@ func handle_connection(cc net.Conn) {
 	// Write server version to client
 
 	err = write_standard_message(cc, writer, kv_msg_login,
-			"v3.7.0 (" + Product + ")")
+			"v3.7.0 (" + common.Product + ")")
 	if err != nil {
 		log.Println("ndt: cannot send our version to client")
 		return

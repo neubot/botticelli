@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bassosimone/botticelli/common"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -10,9 +11,6 @@ import (
 const TARGET = 5
 const CHUNK = 8192
 
-func SpeedtestCollect(w http.ResponseWriter, r *http.Request) {
-}
-
 func SpeedtestDownload(w http.ResponseWriter, r *http.Request) {
 
 	if r.Header.Get("range") != "" {
@@ -20,7 +18,7 @@ func SpeedtestDownload(w http.ResponseWriter, r *http.Request) {
 
 		start_time := time.Now()
 		for time.Since(start_time).Seconds() >= TARGET {
-			w.Write(RandByteMaskingImproved(CHUNK))
+			w.Write(common.RandByteMaskingImproved(CHUNK))
 		}
 		return
 	}
@@ -38,12 +36,8 @@ func SpeedtestDownload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Write(RandByteMaskingImproved(ranges_int[1] - ranges_int[0] - 1))
+	w.Write(common.RandByteMaskingImproved(ranges_int[1] - ranges_int[0] - 1))
 
-}
-
-func SpeedtestNegotiate(w http.ResponseWriter, r *http.Request) {
-	NegotiateDefaultNegotiate(w, r)
 }
 
 func SpeedtestLatency(w http.ResponseWriter, r *http.Request) {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bassosimone/botticelli/common"
 	"log"
 	"net/http"
 	"strconv"
@@ -48,9 +49,5 @@ func DashDownload(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "video/mp4")
 	w.Header().Set("Content-Length", resource_size)
-	w.Write(RandByteMaskingImproved(body_size))
-}
-
-func DashNegotiate(w http.ResponseWriter, r *http.Request) {
-	NegotiateDefaultNegotiate(w, r)
+	w.Write(common.RandByteMaskingImproved(body_size))
 }

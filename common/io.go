@@ -1,4 +1,4 @@
-package main
+package common
 
 // Make sure I/O operations have a deadline
 // See <https://groups.google.com/forum/#!topic/golang-nuts/afgEYsoV8j0>

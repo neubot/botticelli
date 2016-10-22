@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"encoding/json"
@@ -66,13 +66,10 @@ func NegotiateNegotiate(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case match[1] == "bittorrent":
-		BittorrentNegotiate(w, r)
 	case match[1] == "dash":
-		DashNegotiate(w, r)
 	case match[1] == "speedtest":
-		SpeedtestNegotiate(w, r)
 	case match[1] == "raw":
-		RawNegotiate(w, r)
+		NegotiateDefaultNegotiate(w, r)
 	default:
 		log.Println("unknown module")
 		http.NotFound(w, r)
