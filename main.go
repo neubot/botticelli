@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bassosimone/botticelli/nettests/ndt"
 	//"log"
 	//"net/http"
 	"math/rand"
@@ -12,7 +13,7 @@ func main() {
 	//   see <http://stackoverflow.com/a/12321192>
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	StartNdtServer(":3001")
+	ndt.StartNdtServer(":3001")
 
 	// Disabled: for now we shall coexist with neubot-server
 /*

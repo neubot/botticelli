@@ -1,4 +1,4 @@
-package main
+package speedtest
 
 import (
 	"github.com/bassosimone/botticelli/common"

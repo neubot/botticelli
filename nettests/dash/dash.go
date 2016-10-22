@@ -1,4 +1,4 @@
-package main
+package dash
 
 import (
 	"github.com/bassosimone/botticelli/common"
