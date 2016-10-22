@@ -11,6 +11,12 @@ import (
 const TARGET = 5
 const CHUNK = 8192
 
+func SpeedtestNegotiate(w http.ResponseWriter, r *http.Request) {
+}
+
+func SpeedtestCollect(w http.ResponseWriter, r *http.Request) {
+}
+
 func SpeedtestDownload(w http.ResponseWriter, r *http.Request) {
 
 	if r.Header.Get("range") != "" {

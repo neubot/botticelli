@@ -1,9 +1,14 @@
 package main
 
 import (
+	"github.com/bassosimone/botticelli/common"
+	//"github.com/bassosimone/botticelli/nettests/bittorrent"
+	"github.com/bassosimone/botticelli/nettests/dash"
 	"github.com/bassosimone/botticelli/nettests/ndt"
-	//"log"
-	//"net/http"
+	//"github.com/bassosimone/botticelli/nettests/raw"
+	"github.com/bassosimone/botticelli/nettests/speedtest"
+	"log"
+	"net/http"
 	"math/rand"
 	"time"
 )
@@ -15,19 +20,17 @@ func main() {
 
 	ndt.StartNdtServer(":3001")
 
-	// Disabled: for now we shall coexist with neubot-server
-/*
-	http.HandleFunc("/dash/download", DashDownload)
-	http.HandleFunc("/dash/download/", DashDownload)
+	http.HandleFunc("/dash/download", dash.DashDownload)
+	http.HandleFunc("/dash/download/", dash.DashDownload)
 
-	http.HandleFunc("/collect/", NegotiateCollect)
-	http.HandleFunc("/negotiate/", NegotiateNegotiate)
+	http.HandleFunc("/collect/", common.NegotiateCollect)
+	http.HandleFunc("/negotiate/", common.NegotiateNegotiate)
 
-	http.HandleFunc("/speedtest/collect", SpeedtestCollect)
-	http.HandleFunc("/speedtest/latency", SpeedtestLatency)
-	http.HandleFunc("/speedtest/negotiate", SpeedtestNegotiate)
-	http.HandleFunc("/speedtest/download", SpeedtestDownload)
-	http.HandleFunc("/speedtest/upload", SpeedtestUpload)
+	http.HandleFunc("/speedtest/collect", speedtest.SpeedtestCollect)
+	http.HandleFunc("/speedtest/latency", speedtest.SpeedtestLatency)
+	http.HandleFunc("/speedtest/negotiate", speedtest.SpeedtestNegotiate)
+	http.HandleFunc("/speedtest/download", speedtest.SpeedtestDownload)
+	http.HandleFunc("/speedtest/upload", speedtest.SpeedtestUpload)
 
 	http.HandleFunc("/", http.NotFound)
 
@@ -36,5 +39,4 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-*/
 }
