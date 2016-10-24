@@ -7,7 +7,7 @@ $(BOTTICELLI): main.go
 	GOARCH=amd64 GOOS=linux go build -v -o $(BOTTICELLI)
 
 clean:
-	rm -rf -- $(BOTTICELLI)
+	rm -rf -- $(BOTTICELLI) botticelli
 
 deploy: $(BOTTICELLI) botticelli.service deploy.sh rc.local
 	if test -z "$(DEPLOY_HOST)"; then                                      \
