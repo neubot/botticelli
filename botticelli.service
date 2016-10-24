@@ -1,0 +1,13 @@
+# /usr/local/systemd/system/botticelli.service
+
+[Unit]
+Description=Botticelli Neubot Server
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+User=nobody
+Group=nogroup
+ExecStart=/usr/local/bin/botticelli
