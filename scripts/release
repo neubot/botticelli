@@ -5,13 +5,15 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
-sed "s/^const Version = \"$1\"$/const Version = \"$2\"/g" version.go \
-        > version.go.new
-if cmp version.go version.go.new 1>/dev/null 2>/dev/null; then
-    echo "fatal: version.go seems to be unchanged" 1>&2
+VERSION=common/version.go
+
+sed "s/^const Version = \"$1\"$/const Version = \"$2\"/g" $VERSION \
+        > $VERSION.new
+if cmp $VERSION $VERSION.new 1>/dev/null 2>/dev/null; then
+    echo "fatal: $VERSION seems to be unchanged" 1>&2
     exit 1
 fi
-mv version.go.new version.go
+mv $VERSION.new $VERSION
 
 mv ChangeLog.md ChangeLog.md.old
 echo "# botticelli $2 [`date +%Y-%m-%d`]" > ChangeLog.md
