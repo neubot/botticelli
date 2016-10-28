@@ -1,3 +1,8 @@
+# botticelli 0.0.4 [2016-10-28]
+
+- use bernini
+- implement --usage and --help
+
 # botticelli 0.0.3 [2016-10-24]
 
 - code refactoring
