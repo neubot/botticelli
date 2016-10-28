@@ -1,7 +1,7 @@
 package speedtest
 
 import (
-	"github.com/neubot/botticelli/common"
+	"github.com/neubot/bernini"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -24,7 +24,7 @@ func Download(w http.ResponseWriter, r *http.Request) {
 
 		start_time := time.Now()
 		for time.Since(start_time).Seconds() >= TARGET {
-			w.Write(common.RandByteMaskingImproved(CHUNK))
+			w.Write(bernini.RandByteMaskingImproved(CHUNK))
 		}
 		return
 	}
@@ -42,7 +42,7 @@ func Download(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Write(common.RandByteMaskingImproved(ranges_int[1] - ranges_int[0] - 1))
+	w.Write(bernini.RandByteMaskingImproved(ranges_int[1] - ranges_int[0] - 1))
 
 }
 

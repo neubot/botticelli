@@ -1,36 +1,28 @@
 package main
 
 import (
-	"github.com/bassosimone/botticelli/common"
-	"github.com/bassosimone/botticelli/common/negotiate"
-	//"github.com/bassosimone/botticelli/nettests/bittorrent"
-	"github.com/bassosimone/botticelli/nettests/dash"
-	"github.com/bassosimone/botticelli/nettests/ndt"
-	//"github.com/bassosimone/botticelli/nettests/raw"
-	"github.com/bassosimone/botticelli/nettests/speedtest"
+	"github.com/neubot/bernini"
+	"github.com/neubot/botticelli/common"
+	"github.com/neubot/botticelli/common/negotiate"
+	//"github.com/neubot/botticelli/nettests/bittorrent"
+	"github.com/neubot/botticelli/nettests/dash"
+	"github.com/neubot/botticelli/nettests/ndt"
+	//"github.com/neubot/botticelli/nettests/raw"
+	"github.com/neubot/botticelli/nettests/speedtest"
 	"log"
-	"log/syslog"
 	"net/http"
-	"math/rand"
-	"time"
 )
 
 func main() {
-	log.SetFlags(0)
+	bernini.InitLogger()
+	bernini.InitRng()
 
-	// See http://technosophos.com/2013/09/14/using-gos-built-logger-log-syslog.html
-	log.Print("redirecting logs to the system logger")
-	logwriter, err := syslog.New(syslog.LOG_NOTICE, "botticelli")
+	err := bernini.UseSyslog("botticelli")
 	if err != nil {
 		log.Fatal("cannot initialize syslog")
 	}
 
-	log.SetOutput(logwriter)
-	log.Printf("botticelli neubot server %s starting up", common.Version)
-
-	// Make sure we seed the random number generator properly
-	//   see <http://stackoverflow.com/a/12321192>
-	rand.Seed(time.Now().UTC().UnixNano())
+	log.Printf("botticelli server %s starting up", common.Version)
 
 	ndt.Start(":3001")
 

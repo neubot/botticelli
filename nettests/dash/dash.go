@@ -1,7 +1,7 @@
 package dash
 
 import (
-	"github.com/neubot/botticelli/common"
+	"github.com/neubot/bernini"
 	"log"
 	"net/http"
 	"strconv"
@@ -49,5 +49,5 @@ func Download(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "video/mp4")
 	w.Header().Set("Content-Length", resource_size)
-	w.Write(common.RandByteMaskingImproved(body_size))
+	w.Write(bernini.RandByteMaskingImproved(body_size))
 }
