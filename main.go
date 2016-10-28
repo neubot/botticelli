@@ -3,14 +3,14 @@ package main
 import (
 	"github.com/neubot/bernini"
 	"github.com/neubot/botticelli/common"
-	"github.com/neubot/botticelli/common/negotiate"
+	//"github.com/neubot/botticelli/common/negotiate"
 	//"github.com/neubot/botticelli/nettests/bittorrent"
-	"github.com/neubot/botticelli/nettests/dash"
+	//"github.com/neubot/botticelli/nettests/dash"
 	"github.com/neubot/botticelli/nettests/ndt"
 	//"github.com/neubot/botticelli/nettests/raw"
-	"github.com/neubot/botticelli/nettests/speedtest"
+	//"github.com/neubot/botticelli/nettests/speedtest"
 	"log"
-	"net/http"
+	//"net/http"
 )
 
 const usage = `usage: botticelli [--help]
@@ -27,6 +27,8 @@ func main() {
 
 	ndt.Start(":3001")
 
+	// We do not enable Neubot server functionality on stable releases:
+/*
 	http.HandleFunc("/dash/download", dash.Download)
 	http.HandleFunc("/dash/download/", dash.Download)
 
@@ -46,4 +48,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+*/
 }
