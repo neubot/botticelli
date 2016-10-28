@@ -13,14 +13,15 @@ import (
 	"net/http"
 )
 
+const usage = `usage: botticelli [--help]
+       botticelli [--version]`
+
 func main() {
 	bernini.InitLogger()
 	bernini.InitRng()
 
-	err := bernini.UseSyslog("botticelli")
-	if err != nil {
-		log.Fatal("cannot initialize syslog")
-	}
+	bernini.GetoptVersionAndHelp(common.Version, usage)
+	bernini.UseSyslogOrDie("botticelli")
 
 	log.Printf("botticelli server %s starting up", common.Version)
 
@@ -41,7 +42,7 @@ func main() {
 	http.HandleFunc("/", http.NotFound)
 
 	server := &http.Server{Addr: ":8080", Handler: nil}
-	err = server.ListenAndServe()
+	err := server.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}
