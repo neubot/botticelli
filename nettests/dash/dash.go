@@ -1,7 +1,7 @@
 package dash
 
 import (
-	"github.com/bassosimone/botticelli/common"
+	"github.com/neubot/botticelli/common"
 	"log"
 	"net/http"
 	"strconv"

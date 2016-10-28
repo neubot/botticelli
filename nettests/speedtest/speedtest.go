@@ -1,7 +1,7 @@
 package speedtest
 
 import (
-	"github.com/bassosimone/botticelli/common"
+	"github.com/neubot/botticelli/common"
 	"net/http"
 	"regexp"
 	"strconv"

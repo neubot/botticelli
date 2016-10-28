@@ -2,7 +2,7 @@ package ndt
 
 import (
 	"bufio"
-	"github.com/bassosimone/botticelli/common"
+	"github.com/neubot/botticelli/common"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
