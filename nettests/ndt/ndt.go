@@ -257,7 +257,7 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 
 	conns := make([]net.Conn, nstreams)
 	for idx := 0; idx < len(conns); idx += 1 {
-		conn, err := listener.Accept()
+		conn, err := bernini.IoAccept(listener)
 		if err != nil {
 			return err
 		}
