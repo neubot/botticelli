@@ -1,3 +1,8 @@
+# botticelli 0.0.5 [2016-11-04]
+
+- ndt: use timed-out accept()
+- ndt: protect number-of-pending-tests with mutex
+
 # botticelli 0.0.4 [2016-10-28]
 
 - use bernini
