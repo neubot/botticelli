@@ -1,4 +1,4 @@
 package common
 
-const Version = "0.0.5-dev"
+const Version = "0.0.6-dev"
 const Product = "botticelli/" + Version
