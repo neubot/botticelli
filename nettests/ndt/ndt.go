@@ -11,6 +11,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -257,7 +258,7 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 
 	conns := make([]net.Conn, nstreams)
 	for idx := 0; idx < len(conns); idx += 1 {
-		conn, err := listener.Accept()
+		conn, err := bernini.IoAccept(listener)
 		if err != nil {
 			return err
 		}
@@ -280,6 +281,12 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 
 	for idx := 0; idx < len(conns); idx += 1 {
 		log.Printf("ndt: start stream with id %d\n", idx)
+
+		// Note: rather than creating and destroying the goroutine
+		// always it would be more considerate to just have a few
+		// already active goroutines to which to dispatch the message
+		// that there is a specific connection to be served
+
 		go func(conn net.Conn) {
 			// Send the buffer to the client for about ten seconds
 			// TODO: here we should take `web100` snapshots
@@ -433,6 +440,7 @@ func update_queue_pos(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 }
 
 var kv_test_pending bool = false
+var kv_test_pending_mutex sync.Mutex
 
 func handle_connection(cc net.Conn) {
 	defer cc.Close()
@@ -459,8 +467,18 @@ func handle_connection(cc net.Conn) {
 	// Queue management
 	// XXX The current implementation of queue management is minimal, and
 	// possibly also very ugly and stupid. Must be improved.
+	//
+	// Moreover the lock/unlock dance with the mutex is not idiomatic
+	// golang and it would be better to use messages and channels.
 
-	for kv_test_pending {
+	for {
+		kv_test_pending_mutex.Lock()
+		if !kv_test_pending {
+			kv_test_pending = true
+			kv_test_pending_mutex.Unlock()
+			break
+		}
+		kv_test_pending_mutex.Unlock()
 		err = update_queue_pos(cc, reader, writer, 1)
 		if err != nil {
 			log.Println("ndt: failed to update client of its queue position")
@@ -469,10 +487,11 @@ func handle_connection(cc net.Conn) {
 		time.Sleep(3.0 * time.Second)
 	}
 	log.Println("ndt: this test is now running")
-	kv_test_pending = true
 	defer func() {
 		log.Println("ndt: test complete; allowing another test to run")
+		kv_test_pending_mutex.Lock()
 		kv_test_pending = false
+		kv_test_pending_mutex.Unlock()
 	}()
 
 	// Write queue empty message
