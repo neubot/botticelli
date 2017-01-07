@@ -1,3 +1,5 @@
+# botticelli 0.0.7-dev [2017-01-07]
+
 # botticelli 0.0.6 [2017-01-07]
 
 - README.md: add basic documentation (#19)
