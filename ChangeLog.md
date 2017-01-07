@@ -1,3 +1,8 @@
+# botticelli 0.0.6 [2017-01-07]
+
+- README.md: add basic documentation (#19)
+- ndt.go: send at least one `MSG_RESULT` back (#18)
+
 # botticelli 0.0.5 [2016-11-04]
 
 - ndt: use timed-out accept()
