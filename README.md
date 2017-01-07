@@ -20,25 +20,48 @@ We currently use botticelli to implement
 botticelli is used ONLY to implement a NDT server (meaning
 that botticelli's Neubot specific code is not enabled).
 
+## Cloning botticelli
+
+Botticelli is written in [Golang](https://golang.org/) and you need to
+have it installed on your system to compile botticelli.
+
+To checkout botticelli you first need to select your `GOPATH`. In my
+systems I typically use my home for that:
+
+    export GOPATH=$HOME
+
+Then you need to create the directory where to clone botticelli:
+
+    install -d $GOPATH/src/github.com/neubot
+
+Then close like this:
+
+    cd $GOPATH/src/github.com/neubot
+    git clone https://github.com/neubot/botticelli
+
 ## Compiling and cross compiling
 
-Botticelli is written in Go and you need to have Go installed on
-your system to compile it.
+You need to enter into botticelli's root directory first:
 
-Make sure the `GOPATH` environment variable is set. The typical setup
-that I use is the following:
+    cd $GOPATH/src/github.com/neubot/botticelli
 
-- GOPATH is set to $HOME
-- botticelli is checked out in `$GOPATH/src/github.com/neubot/botticelli`
-
-Adjust `GOPATH` to your needs and you should be okay.
-
-With these settings, compiling botticelli is as simple as running the
-following command from `$GOPATH/src/github.com/neubot/botticelli`:
+Then compile for your system and architecture:
 
     go get -u -v
+
+To run botticelli, execute:
+
+    $GOPATH/bin/botticelli
 
 Because botticelli is written in Go, it is also quite easy to cross
 compile it for other systems and architectures, e.g.:
 
     GOOS=linux GOARCH=386 go get -u -v
+
+The cross compiled binary will be located at:
+
+    $GOPATH/bin/linux_386/botticelli
+
+Consult [Golang docs](
+https://golang.org/doc/install/source#environment<Paste>) for more
+info on supported `GOOS` and `GOARCH` combinations.
