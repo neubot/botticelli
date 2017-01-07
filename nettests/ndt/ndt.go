@@ -556,7 +556,20 @@ func handle_connection(cc net.Conn) {
 		}
 	}
 
-	// FIXME: send MSG_RESULTS to client
+	// Send MSG_RESULTS to the client
+
+	/*
+	 * TODO: Here we should actually send results but to do that we need
+	 * first to implement reading Web100 variables from /proc/web100.
+	 *
+	 * Until we reach this point, send back a variable that NDT client
+	 * will ignore but that is consistent with what it would expect.
+	 */
+	err = write_standard_message(cc, writer, kv_msg_results,
+		"botticelli_does_not_yet_collect_web100_data_sorry: 1\n")
+	if err != nil {
+		return
+	}
 
 	// Send empty MSG_LOGOUT to client
 
