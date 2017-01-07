@@ -18,7 +18,7 @@ focus of botticelli is to implement NDT.
 We currently use botticelli to implement
 [neubot-server](https://github.com/neubot/neubot-server), where
 botticelli is used ONLY to implement a NDT server (meaning
-that botticelli's Neubot specific code is not enable).
+that botticelli's Neubot specific code is not enabled).
 
 ## Compiling and cross compiling
 
