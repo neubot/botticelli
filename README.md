@@ -34,7 +34,7 @@ Then you need to create the directory where to clone botticelli:
 
     install -d $GOPATH/src/github.com/neubot
 
-Then close like this:
+Then clone like this:
 
     cd $GOPATH/src/github.com/neubot
     git clone https://github.com/neubot/botticelli
