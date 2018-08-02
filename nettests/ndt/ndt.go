@@ -2,8 +2,6 @@ package ndt
 
 import (
 	"bufio"
-	"github.com/neubot/bernini"
-	"github.com/neubot/botticelli/common"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -13,6 +11,9 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/neubot/bernini"
+	"github.com/neubot/botticelli/common"
 )
 
 const kv_comm_failure byte = 0
@@ -44,6 +45,8 @@ const kv_srv_queue_server_busy_60s string = "9999"
 
 const kv_parallel_streams int = 3
 
+const buflen = 8192
+
 /*
  __  __
 |  \/  | ___  ___ ___  __ _  __ _  ___  ___
@@ -56,7 +59,7 @@ const kv_parallel_streams int = 3
 */
 
 func read_message_internal(cc net.Conn, reader io.Reader) (
-                           byte, []byte, error) {
+	byte, []byte, error) {
 
 	// 1. read type
 
@@ -95,7 +98,7 @@ type standard_message_t struct {
 }
 
 func read_standard_message(cc net.Conn, reader io.Reader) (
-                           byte, string, error) {
+	byte, string, error) {
 	msg_type, msg_buff, err := read_message_internal(cc, reader)
 	if err != nil {
 		return 0, "", err
@@ -112,7 +115,7 @@ func read_standard_message(cc net.Conn, reader io.Reader) (
 }
 
 func write_message_internal(cc net.Conn, writer *bufio.Writer,
-                            message_type byte, encoded_body []byte) error {
+	message_type byte, encoded_body []byte) error {
 
 	log.Printf("ndt: write any message: type=%d\n", message_type)
 	log.Printf("ndt: write any message: length=%d\n", len(encoded_body))
@@ -147,7 +150,7 @@ func write_message_internal(cc net.Conn, writer *bufio.Writer,
 }
 
 func write_standard_message(cc net.Conn, writer *bufio.Writer,
-                            message_type byte, message_body string) error {
+	message_type byte, message_body string) error {
 
 	s_msg := &standard_message_t{
 		Msg: message_body,
@@ -168,7 +171,7 @@ type extended_login_message_t struct {
 }
 
 func read_extended_login(cc net.Conn, reader io.Reader) (
-                         *extended_login_message_t, error) {
+	*extended_login_message_t, error) {
 
 	// Read ordinary message
 
@@ -213,6 +216,29 @@ func write_raw_string(cc net.Conn, writer *bufio.Writer, str string) error {
 	return bernini.IoFlush(cc, writer)
 }
 
+// Init_throughput_test binds the port and tell the port number to
+// the client.
+// TODO: choose a random port instead than an hardcoded port
+func init_throughput_test(cc net.Conn, writer *bufio.Writer,
+	is_extended bool) (net.Listener, error) {
+	listener, err := net.Listen("tcp", ":3010")
+	if err != nil {
+		return nil, err
+	}
+
+	msg := "3010"
+	if is_extended {
+		msg += " 10000.0 1 500.0 0.0 "
+		msg += strconv.Itoa(kv_parallel_streams)
+	}
+	err = write_standard_message(cc, writer, kv_test_prepare, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return listener, nil
+}
+
 /*
  ____ ____   ____
 / ___|___ \ / ___|
@@ -229,24 +255,13 @@ type s2c_message_t struct {
 }
 
 func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
-                  is_extended bool) error {
+	is_extended bool) error {
 
-	// Bind port and tell the port number to the server
-	// TODO: choose a random port instead than an hardcoded port
-
-	listener, err := net.Listen("tcp", ":3010")
+	listener, err := init_throughput_test(cc, writer, is_extended)
 	if err != nil {
 		return err
 	}
-	prepare_message := "3010"
-	if is_extended {
-		prepare_message += " 10000.0 1 500.0 0.0 "
-		prepare_message += strconv.Itoa(kv_parallel_streams)
-	}
-	err = write_standard_message(cc, writer, kv_test_prepare, prepare_message)
-	if err != nil {
-		return err
-	}
+
 	defer listener.Close()
 
 	// Wait for client(s) to connect
@@ -274,9 +289,9 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 
 	// Run the N streams in parallel
 
-	channel := make(chan int64)
+	channel := make(chan int)
 
-	output_buff := bernini.RandAsciiRemainder(8192)
+	output_buff := bernini.RandAsciiRemainder(buflen)
 	start := time.Now()
 
 	for idx := 0; idx < len(conns); idx += 1 {
@@ -305,23 +320,23 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 					log.Println("ndt: cannot flush connection with client")
 					break
 				}
-				channel <- int64(len(output_buff))
+				channel <- len(output_buff)
 				if time.Since(start).Seconds() > 10.0 {
 					log.Println("ndt: enough time elapsed")
 					break
 				}
 			}
 
-			conn.Close()   // Explicit to notify the client we're done
-			channel <- -1  // Tell the controller we're done
+			conn.Close()  // Explicit to notify the client we're done
+			channel <- -1 // Tell the controller we're done
 		}(conns[idx])
 	}
 
-	bytes_sent := int64(0)
+	bytes_sent := 0
 	for num_complete := 0; num_complete < len(conns); {
 		count := <-channel
 		if count < 0 {
-			log.Printf("ndt: a stream just terminated...");
+			log.Printf("ndt: a stream just terminated...")
 			num_complete += 1
 			continue
 		}
@@ -335,7 +350,7 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 	message := &s2c_message_t{
 		ThroughputValue:  strconv.FormatFloat(speed_kbits, 'f', -1, 64),
 		UnsentDataAmount: "0", // XXX
-		TotalSentByte:    strconv.FormatInt(bytes_sent, 10),
+		TotalSentByte:    strconv.Itoa(bytes_sent),
 	}
 	data, err := json.Marshal(message)
 	if err != nil {
@@ -364,6 +379,103 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 	return write_standard_message(cc, writer, kv_test_finalize, "")
 }
 
+func run_c2s_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer, is_extended bool) error {
+	listener, err := init_throughput_test(cc, writer, is_extended)
+	if err != nil {
+		return err
+	}
+
+	defer listener.Close()
+
+	// Wait for client(s) to connect
+
+	nstreams := 1
+	if is_extended {
+		nstreams = kv_parallel_streams
+	}
+
+	conns := make([]net.Conn, nstreams)
+	for idx := 0; idx < len(conns); idx += 1 {
+		conn, err := bernini.IoAccept(listener)
+		if err != nil {
+			return err
+		}
+		conns[idx] = conn
+	}
+
+	// Send empty TEST_START message to tell the client to start
+
+	err = write_standard_message(cc, writer, kv_test_start, "")
+	if err != nil {
+		return err
+	}
+
+	// Run the N streams in parallel
+
+	channel := make(chan int)
+
+	input_buff := make([]byte, buflen)
+	start := time.Now()
+
+	for idx := 0; idx < len(conns); idx += 1 {
+		log.Printf("ndt: start stream with id %d\n", idx)
+
+		// Note: rather than creating and destroying the goroutine
+		// always it would be more considerate to just have a few
+		// already active goroutines to which to dispatch the message
+		// that there is a specific connection to be served
+
+		go func(conn net.Conn) {
+			// Send the buffer to the client for about ten seconds
+			// TODO: here we should take `web100` snapshots
+			conn_reader := bufio.NewReader(conn)
+			defer conn.Close()
+
+			for {
+				_, err = bernini.IoReadFull(conn, conn_reader, input_buff)
+				if err != nil {
+					log.Println("ndt: failed to read from client")
+					break
+				}
+				channel <- int(len(input_buff))
+				if time.Since(start).Seconds() > 10.0 {
+					log.Println("ndt: enough time elapsed")
+					break
+				}
+			}
+
+			conn.Close()  // Explicit to notify the client we're done
+			channel <- -1 // Tell the controller we're done
+		}(conns[idx])
+	}
+
+	bytes_received := 0
+	for num_complete := 0; num_complete < len(conns); {
+		count := <-channel
+		if count < 0 {
+			log.Printf("ndt: a stream just terminated...")
+			num_complete += 1
+			continue
+		}
+		bytes_received += count
+	}
+	elapsed := time.Since(start)
+
+	// Send message containing what we measured
+
+	speed_kbits := (8.0 * float64(bytes_received)) / 1000.0 / elapsed.Seconds()
+	message := strconv.FormatFloat(speed_kbits, 'f', -1, 64)
+	err = write_standard_message(cc, writer, kv_test_msg, message)
+	if err != nil {
+		return err
+	}
+
+	// Send the TEST_FINALIZE message that concludes the test
+
+	return write_standard_message(cc, writer, kv_test_finalize, "")
+
+}
+
 /*
  __  __ _____ _____  _
 |  \/  | ____|_   _|/ \
@@ -374,7 +486,7 @@ func run_s2c_test(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
 */
 
 func run_meta_test(cc net.Conn, reader *bufio.Reader,
-                   writer *bufio.Writer) error {
+	writer *bufio.Writer) error {
 
 	// Send empty TEST_PREPARE and TEST_START messages to the client
 
@@ -418,14 +530,14 @@ func run_meta_test(cc net.Conn, reader *bufio.Reader,
 */
 
 func update_queue_pos(cc net.Conn, reader *bufio.Reader, writer *bufio.Writer,
-                      position int) error {
+	position int) error {
 	err := write_standard_message(cc, writer, kv_srv_queue,
-			strconv.Itoa(position))
+		strconv.Itoa(position))
 	if err != nil {
 		return errors.New("ndt: cannot write SRV_QUEUE message")
 	}
 	err = write_standard_message(cc, writer, kv_srv_queue,
-			kv_srv_queue_heartbeat)
+		kv_srv_queue_heartbeat)
 	if err != nil {
 		return errors.New("ndt: cannot write SRV_QUEUE heartbeat message")
 	}
@@ -505,7 +617,7 @@ func handle_connection(cc net.Conn) {
 	// Write server version to client
 
 	err = write_standard_message(cc, writer, kv_msg_login,
-			"v3.7.0 (" + common.Product + ")")
+		"v3.7.0 ("+common.Product+")")
 	if err != nil {
 		log.Println("ndt: cannot send our version to client")
 		return
@@ -521,6 +633,14 @@ func handle_connection(cc net.Conn) {
 	}
 	if (status & kv_test_s2c) != 0 {
 		tests_message += strconv.Itoa(kv_test_s2c)
+		tests_message += " "
+	}
+	if (status & kv_test_c2s_ext) != 0 {
+		tests_message += strconv.Itoa(kv_test_c2s_ext)
+		tests_message += " "
+	}
+	if (status & kv_test_c2s) != 0 {
+		tests_message += strconv.Itoa(kv_test_c2s)
 		tests_message += " "
 	}
 	if (status & kv_test_meta) != 0 {
@@ -545,6 +665,20 @@ func handle_connection(cc net.Conn) {
 		err = run_s2c_test(cc, reader, writer, false)
 		if err != nil {
 			log.Println("ndt: failure running s2c test")
+			return
+		}
+	}
+	if (status & kv_test_c2s_ext) != 0 {
+		err = run_c2s_test(cc, reader, writer, true)
+		if err != nil {
+			log.Println("ndt: failure running c2s test")
+			return
+		}
+	}
+	if (status & kv_test_c2s) != 0 {
+		err = run_c2s_test(cc, reader, writer, false)
+		if err != nil {
+			log.Println("ndt: failure running c2s test")
 			return
 		}
 	}
