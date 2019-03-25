@@ -25,7 +25,7 @@ func main() {
 
 	log.Printf("botticelli server %s starting up", common.Version)
 
-	ndt.Start(":3001")
+	ndt.Start(":3007")
 
 	http.HandleFunc("/dash/download", dash.Download)
 	http.HandleFunc("/dash/download/", dash.Download)

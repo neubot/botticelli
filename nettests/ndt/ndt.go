@@ -221,12 +221,12 @@ func write_raw_string(cc net.Conn, writer *bufio.Writer, str string) error {
 // TODO: choose a random port instead than an hardcoded port
 func init_throughput_test(cc net.Conn, writer *bufio.Writer,
 	is_extended bool) (net.Listener, error) {
-	listener, err := net.Listen("tcp", ":3010")
+	listener, err := net.Listen("tcp", ":3017")
 	if err != nil {
 		return nil, err
 	}
 
-	msg := "3010"
+	msg := "3017"
 	if is_extended {
 		msg += " 10000.0 1 500.0 0.0 "
 		msg += strconv.Itoa(kv_parallel_streams)
